@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header with Logo and Site Name -->
+    <header>
+        <img src="logo.png" alt="Logo" class="logo">
+        <h1>Incident Management System</h1>
+    </header>
+
+    <!-- Hero Section with a Button to Create New Incident -->
+    <section class="hero">
+        <button id="createIncidentButton" class="hero-button">Create New Incident</button>
+    </section>
+
+    <!-- Incident List Section -->
+    <section class="incident-list">
+        <h2>Active Incidents</h2>
+        <table id="incidentTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Incidents will be dynamically added here -->
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Incident Form (for Create/Update) -->
+    <section id="incidentFormSection" class="incident-form-section">
+        <h2 id="formTitle">Create New Incident</h2>
+        <form id="incidentForm">
+            <label for="incidentDescription">Description:</label>
+            <input type="text" id="incidentDescription" required>
+
+            <label for="incidentStatus">Status:</label>
+            <select id="incidentStatus" required>
+                <option value="open">Open</option>
+                <option value="in-progress">In Progress</option>
+                <option value="closed">Closed</option>
+            </select>
+
+            <button type="submit" id="formSubmitButton">Create Incident</button>
+            <button type="button" id="formCancelButton">Cancel</button>
+        </form>
+    </section>
+
+    
+
+    <script src="script.js"></script>
+</body>
+</html>
