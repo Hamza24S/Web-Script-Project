@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Incident Management</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <header>
+    <h1>Create an Account</h1>
+  </header>
+
+  <section class="register-form">
+    <form action="/register" method="POST">
+    <!--Username-->
+      <label for="username">Username</label>
+      <input id="username" type="text" name="username" placeholder="Username" required>
+    <!--Password-->  
+      <label for="password">Password</label>
+      <input id="password" type="password" name="password" placeholder="Password" required>
+      <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="/login">Login here</a></p>
+  </section>
+</body>
+</html>
