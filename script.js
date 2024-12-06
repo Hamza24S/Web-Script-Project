@@ -1,9 +1,18 @@
-// script.js
 
 // Sample incident data (initially empty)
 let incidents = [];
 
 // Function to render the incident table
+async function fetchAndRenderIncidents() {
+    try {
+        const response = await fetch('/incidents'); // Fetch incidents from the server
+        incidents = await response.json(); // Update the local array
+        renderIncidentTable(); // Re-render the table
+    } catch (error) {
+        console.error('Failed to fetch incidents:', error);
+    }
+}
+
 function renderIncidentTable() {
     const tableBody = document.getElementById('incidentTable').querySelector('tbody');
     tableBody.innerHTML = ''; // Clear current table rows
@@ -23,6 +32,7 @@ function renderIncidentTable() {
         tableBody.appendChild(row);
     });
 }
+
 
 // Show the form to create a new incident
 function showIncidentForm() {
@@ -47,42 +57,70 @@ function editIncident(index) {
 // Handle form submission (Create/Update incident)
 let currentEditIndex = null;
 
-document.getElementById('incidentForm').addEventListener('submit', function(event) {
+document.getElementById('incidentForm').addEventListener('submit', async function(event) {
     event.preventDefault();
 
     const description = document.getElementById('incidentDescription').value;
     const status = document.getElementById('incidentStatus').value;
 
-    if (currentEditIndex === null) {
-        // Create new incident
-        const newIncident = {
-            id: incidents.length + 1,
-            description,
-            status
-        };
-        incidents.push(newIncident);
-    } else {
-        // Update existing incident
-        incidents[currentEditIndex] = { id: incidents[currentEditIndex].id, description, status };
-    }
+    try {
+        if (currentEditIndex === null) {
+            const response = await fetch('/incidents', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description, status })
+            });
 
-    renderIncidentTable();
-    document.getElementById('incidentFormSection').style.display = 'none';
+            if (!response.ok) {
+                throw new Error('Failed to create incident');
+            }
+        } else {
+            const incidentId = incidents[currentEditIndex].id;
+            const response = await fetch(`/incidents/${incidentId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description, status })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update incident');
+            }
+        }
+
+        // Refresh incidents from the backend
+        await fetchAndRenderIncidents();
+        document.getElementById('incidentFormSection').style.display = 'none';
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        alert('An error occurred while saving the incident.');
+    }
 });
+
 
 // Handle form cancel
 document.getElementById('formCancelButton').addEventListener('click', function() {
     document.getElementById('incidentFormSection').style.display = 'none';
 });
 
-// Handle delete incident
-function deleteIncident(index) {
-    incidents.splice(index, 1);
-    renderIncidentTable();
+async function deleteIncident(index) {
+    const incidentId = incidents[index].id;
+
+    try {
+        const response = await fetch(`/incidents/${incidentId}`, { method: 'DELETE' });
+        if (!response.ok) {
+            throw new Error('Failed to delete incident');
+        }
+        await fetchAndRenderIncidents(); // Refresh the list after deletion
+    } catch (error) {
+        console.error('Error deleting incident:', error);
+        alert('Failed to delete the incident.');
+    }
 }
 
 // Event listener for Create New Incident button
 document.getElementById('createIncidentButton').addEventListener('click', showIncidentForm);
 
-// Initial render
+document.addEventListener('DOMContentLoaded', fetchAndRenderIncidents);
+
 renderIncidentTable();
+
