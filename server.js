@@ -1,12 +1,23 @@
+const User = require('./models/user');
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const router = require('./route'); // Import routes
+
+const mongoose = require('mongoose');
+
+const incidentSchema = new mongoose.Schema({
+    description: { type: String, required: true },
+    status: { type: String, required: true },
+    userId: { type: String, required: true } 
+});
+
+// Create the Incident model
+const Incident = mongoose.model('Incident', incidentSchema);
 
 
 const app = express();
@@ -16,8 +27,7 @@ const port = 3000;
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true })); 
 app.use(cookieParser()); // 
-
-
+app.use('/', router);
 app.use(express.static(path.join(__dirname, 'public'))); 
 
 mongoose.connect('mongodb://localhost:27017/incident-management', { useNewUrlParser: true, useUnifiedTopology: true })
@@ -28,17 +38,14 @@ mongoose.connect('mongodb://localhost:27017/incident-management', { useNewUrlPar
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views')); 
 
-app.get('/login', (req, res) => {
-    res.render('login'); 
-  });
-  
-
-  app.get('/register', (req, res) => {
-    res.render('register');
-  });
-
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'register.html'));
+app.get('/incidents', isAuthenticated, async (req, res) => {
+  try {
+      const incidents = await Incident.find({ userId: req.user.id });
+      res.json(incidents); 
+  } catch (error) {
+      console.error('Error fetching incidents:', error);
+      res.status(500).send('Error fetching incidents');
+  }
 });
 
 
@@ -106,14 +113,21 @@ function renderIncidentTable() {
   });
 }
 
-// Handle incident creation
-app.post('/incidents', (req, res) => {
-  const { description, status } = req.body;
-  const newIncident = { id: incidents.length + 1, description, status };
-  incidents.push(newIncident);
-  renderIncidentTable();
-  res.json(newIncident);
+app.post('/incidents', isAuthenticated, async (req, res) => {
+  try {
+      const newIncident = new Incident({
+          description: req.body.description,
+          status: req.body.status,
+          userId: req.user.id // Associate the incident with the logged-in user
+      });
+      await newIncident.save();
+      res.json(newIncident); // Return the created incident
+  } catch (error) {
+      console.error('Error creating incident:', error);
+      res.status(500).send('Error creating incident');
+  }
 });
+
 
 // Handle incident update
 app.put('/incidents/:id', (req, res) => {
@@ -131,19 +145,24 @@ app.put('/incidents/:id', (req, res) => {
   }
 });
 
-// Handle incident deletion
-app.delete('/incidents/:id', (req, res) => {
-  const incidentId = parseInt(req.params.id);
-  const index = incidents.findIndex(inc => inc.id === incidentId);
-
-  if (index !== -1) {
-    incidents.splice(index, 1);
-    renderIncidentTable();
-    res.sendStatus(200);
-  } else {
-    res.status(404).send('Incident not found');
+app.delete('/incidents/:id', isAuthenticated, async (req, res) => {
+  try {
+      const result = await Incident.findOneAndDelete({
+          _id: req.params.id,
+          userId: req.user.id // Ensure user owns the incident
+      });
+      if (!result) {
+          return res.status(404).send('Incident not found');
+      }
+      res.sendStatus(200);
+  } catch (error) {
+      console.error('Error deleting incident:', error);
+      res.status(500).send('Error deleting incident');
   }
 });
+
+
+
 
 
 // Start the server
